@@ -96,7 +96,7 @@ export const Achievements: React.FC<AchievementsProps> = ({ achievements }) => {
                 <p className="text-sm text-slate-400">{achievement.description}</p>
                 {achievement.unlockedAt && (
                   <p className="text-xs text-yellow-500/70 mt-1">
-                    Unlocked: {achievement.unlockedAt.toLocaleDateString()}
+                    Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>

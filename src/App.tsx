@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import type { TypingStats, LevelProgress, Achievement } from '@/types';
 import { levels, initialProgress, achievements as initialAchievements, calculateStars } from '@/data/levels';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useTypingTest } from '@/hooks/useTypingTest';
 import { TypingArea } from '@/components/TypingArea';
 import { VirtualKeyboard } from '@/components/VirtualKeyboard';
@@ -25,9 +26,15 @@ function App() {
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  // Progress and achievements
-  const [progress, setProgress] = useState<LevelProgress[]>(initialProgress);
-  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
+  // Progress and achievements — persisted to localStorage
+  const [progress, setProgress] = useLocalStorage<LevelProgress[]>(
+    'typing-guru-progress',
+    initialProgress
+  );
+  const [achievements, setAchievements] = useLocalStorage<Achievement[]>(
+    'typing-guru-achievements',
+    initialAchievements
+  );
 
   // Get current level
   const currentLevel = levels.find((l) => l.id === currentLevelId) || levels[0];
