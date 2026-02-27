@@ -29,10 +29,7 @@ export const useTypingTest = ({
   onComplete,
 }: UseTypingTestProps): UseTypingTestReturn => {
   // Select random exercise from level
-  const [targetText] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * level.exercises.length);
-    return level.exercises[randomIndex];
-  });
+  const [targetText, setTargetText] = useState<string>('');
 
   const [userInput, setUserInput] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -232,6 +229,14 @@ export const useTypingTest = ({
       return () => clearInterval(interval);
     }
   }, [gameState, calculateStats]);
+
+  // Update targetText when level changes and reset the test
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * level.exercises.length);
+    setTargetText(level.exercises[randomIndex]);
+    // Also reset the test when level changes
+    resetTest();
+  }, [level, resetTest]);
 
   // Cleanup on unmount
   useEffect(() => {
