@@ -8,6 +8,7 @@ A modern, progressive touch-typing trainer built with **React + TypeScript + Vit
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.x-38bdf8?logo=tailwindcss)
 
 ---
+## [Visit Typing Guru](https://master.d26adgs03vcji6.amplifyapp.com)
 
 ## 📸 Preview
 
