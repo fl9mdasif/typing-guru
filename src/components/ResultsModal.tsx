@@ -199,7 +199,7 @@ export const ResultsModal: React.FC<ResultsModalProps> = ({
           <Button
             variant="outline"
             onClick={onRetry}
-            className="flex-1 border-slate-700 hover:bg-slate-800"
+            className="flex-1 border-slate-700 bg-red-500 hover:bg-slate-800"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Retry

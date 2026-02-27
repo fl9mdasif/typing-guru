@@ -24,8 +24,10 @@ interface SpeedTestResultsProps {
 }
 
 const SpeedTestResults: React.FC<SpeedTestResultsProps> = ({ stats, onRetry, onNewText }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm">
         <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+
             <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4">
                     <CheckCircle2 className="w-8 h-8 text-blue-400" />
@@ -198,8 +200,6 @@ export const SpeedTest: React.FC = () => {
                 onKeyPress={handleKeyPress}
             />
 
-            {/* Virtual keyboard */}
-            <VirtualKeyboard currentKey={userInput.slice(-1)} nextKey={nextKey} levelId={0} />
 
             {/* Controls */}
             <div className="flex justify-center gap-4 flex-wrap">
@@ -267,6 +267,10 @@ export const SpeedTest: React.FC = () => {
                     </Button>
                 )}
             </div>
+
+            {/* Virtual keyboard */}
+            <VirtualKeyboard currentKey={userInput.slice(-1)} nextKey={nextKey} levelId={0} />
+
 
             {/* Results modal */}
             {showResults && finalStats && (

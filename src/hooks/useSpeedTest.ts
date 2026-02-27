@@ -54,33 +54,33 @@ export const useSpeedTest = ({
         maxStreak: 0,
     });
 
-    const calculateStats = useCallback(
-        (streak: number): TypingStats => {
-            if (!startTimeRef.current) return { ...stats, streak };
-            const now = Date.now();
-            const elapsedMs = now - startTimeRef.current - totalPausedTimeRef.current;
-            const elapsedMinutes = elapsedMs / 60000;
-            const wpm =
-                elapsedMinutes > 0
-                    ? Math.round((stats.correctKeystrokes / 5) / elapsedMinutes)
-                    : 0;
-            const accuracy =
-                stats.totalKeystrokes > 0
-                    ? Math.round((stats.correctKeystrokes / stats.totalKeystrokes) * 100)
-                    : 100;
-            return {
-                wpm,
-                accuracy,
-                totalKeystrokes: stats.totalKeystrokes,
-                correctKeystrokes: stats.correctKeystrokes,
-                errors: stats.errors,
-                timeElapsed: Math.floor(elapsedMs / 1000),
-                streak,
-                maxStreak: stats.maxStreak,
-            };
-        },
-        [stats]
-    );
+    // const calculateStats = useCallback(
+    //     (streak: number): TypingStats => {
+    //         if (!startTimeRef.current) return { ...stats, streak };
+    //         const now = Date.now();
+    //         const elapsedMs = now - startTimeRef.current - totalPausedTimeRef.current;
+    //         const elapsedMinutes = elapsedMs / 60000;
+    //         const wpm =
+    //             elapsedMinutes > 0
+    //                 ? Math.round((stats.correctKeystrokes / 5) / elapsedMinutes)
+    //                 : 0;
+    //         const accuracy =
+    //             stats.totalKeystrokes > 0
+    //                 ? Math.round((stats.correctKeystrokes / stats.totalKeystrokes) * 100)
+    //                 : 100;
+    //         return {
+    //             wpm,
+    //             accuracy,
+    //             totalKeystrokes: stats.totalKeystrokes,
+    //             correctKeystrokes: stats.correctKeystrokes,
+    //             errors: stats.errors,
+    //             timeElapsed: Math.floor(elapsedMs / 1000),
+    //             streak,
+    //             maxStreak: stats.maxStreak,
+    //         };
+    //     },
+    //     [stats]
+    // );
 
     const finishTest = useCallback(
         (streak: number) => {

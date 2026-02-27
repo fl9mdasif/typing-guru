@@ -86,10 +86,10 @@ function App() {
         }
       }
 
-      // Home Row Hero (levels 1-5)
+      // Home Row Hero (levels 1-13)
       const completedLevels = progress.filter((p) => p.completed).map((p) => p.levelId);
       if (
-        [1, 2, 3, 4, 5].every((id) => completedLevels.includes(id)) &&
+        Array.from({ length: 13 }, (_, i) => i + 1).every((id) => completedLevels.includes(id)) &&
         !newAchievements.find((a) => a.id === 'home-row-hero')?.unlocked
       ) {
         const achievement = newAchievements.find((a) => a.id === 'home-row-hero');
@@ -235,16 +235,15 @@ function App() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                 <Keyboard className="w-6 h-6 text-white" />
               </div>
-              <div>
+              <a href="/">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                   TypeMaster
                 </h1>
                 <p className="text-xs text-slate-400">Master the keyboard</p>
-              </div>
+              </a>
             </div>
 
             <div className="flex items-center gap-3">
-              <Achievements achievements={achievements} />
 
               <Button
                 variant="outline"
@@ -258,7 +257,7 @@ function App() {
                 )}
               >
                 <Gauge className="w-4 h-4 mr-2 text-blue-400" />
-                Speed Test
+                Test your TypingSpeed
               </Button>
 
               <Button
@@ -273,12 +272,16 @@ function App() {
                 )}
               >
                 <Trophy className="w-4 h-4 mr-2 text-yellow-400" />
-                Levels
+                Typing Game
               </Button>
+
+              <Achievements achievements={achievements} />
+
             </div>
           </div>
         </div>
       </header>
+
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
@@ -301,7 +304,7 @@ function App() {
               <p className="text-slate-400">{currentLevel.description}</p>
               <div className="flex justify-center gap-4 mt-3 text-sm">
                 <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-300">
-                  Level {currentLevelId}/10
+                  Level {currentLevelId}/{levels.length}
                 </span>
                 <span className={cn(
                   'px-3 py-1 rounded-full capitalize',
@@ -355,12 +358,7 @@ function App() {
               exerciseJustCompleted={exerciseJustCompleted}
             />
 
-            {/* Virtual keyboard */}
-            <VirtualKeyboard
-              currentKey={userInput.slice(-1)}
-              nextKey={nextKey}
-              levelId={currentLevelId}
-            />
+
 
             {/* Controls */}
             <div className="flex justify-center gap-4">
@@ -406,6 +404,14 @@ function App() {
                 </Button>
               )}
             </div>
+
+            {/* Virtual keyboard */}
+            <VirtualKeyboard
+              currentKey={userInput.slice(-1)}
+              nextKey={nextKey}
+              levelId={currentLevelId}
+            />
+
           </div>
         )}
       </main>

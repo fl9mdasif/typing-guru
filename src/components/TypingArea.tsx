@@ -143,7 +143,7 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
       {/* Main text display */}
       <div
         className={cn(
-          'text-2xl md:text-3xl font-mono leading-relaxed tracking-wide',
+          'text-lg md:text-2xl font-mono leading-relaxed tracking-wide',
           'select-none pointer-events-none'
         )}
       >
