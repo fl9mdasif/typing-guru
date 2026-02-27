@@ -9,6 +9,12 @@ A modern, progressive touch-typing trainer built with **React + TypeScript + Vit
 
 ---
 
+## 📸 Preview
+
+![Typing Guru Screenshot](https://i.ibb.co.com/svSbVFpC/home.png)
+
+> **Tip:** Take a screenshot of the app and save it as `public/preview.png` to display it here.
+
 
 
 ## ✨ Features
