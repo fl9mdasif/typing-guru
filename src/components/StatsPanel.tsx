@@ -5,8 +5,7 @@ import { Zap, Target, Keyboard, Flame, Clock, TrendingUp } from 'lucide-react';
 
 interface StatsPanelProps {
   stats: TypingStats;
-  timeRemaining: number;
-  totalTime: number;
+  timeElapsed: number;
   className?: string;
 }
 
@@ -51,44 +50,14 @@ const StatCard: React.FC<StatCardProps> = ({
 
 export const StatsPanel: React.FC<StatsPanelProps> = ({
   stats,
-  timeRemaining,
-  totalTime,
+  timeElapsed,
   className,
 }) => {
-  const progress = ((totalTime - timeRemaining) / totalTime) * 100;
-  const isLowTime = timeRemaining <= 10;
+  const mins = Math.floor(timeElapsed / 60);
+  const secs = timeElapsed % 60;
 
   return (
     <div className={cn('w-full max-w-4xl mx-auto', className)}>
-      {/* Timer bar */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-400" />
-            <span className="text-sm text-slate-400">Time Remaining</span>
-          </div>
-          <span
-            className={cn(
-              'text-2xl font-mono font-bold transition-colors',
-              isLowTime ? 'text-red-500 animate-pulse' : 'text-white'
-            )}
-          >
-            {Math.floor(timeRemaining / 60)}:
-            {(timeRemaining % 60).toString().padStart(2, '0')}
-          </span>
-        </div>
-        <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
-          <div
-            className={cn(
-              'h-full transition-all duration-1000 rounded-full',
-              isLowTime
-                ? 'bg-gradient-to-r from-red-500 to-red-600'
-                : 'bg-gradient-to-r from-blue-500 to-cyan-500'
-            )}
-            style={{ width: `${100 - progress}%` }}
-          />
-        </div>
-      </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -134,7 +103,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
         <div className="flex items-center gap-2 text-slate-400">
           <Clock className="w-4 h-4" />
           <span>
-            Time: <span className="text-blue-400 font-medium">{stats.timeElapsed}s</span>
+            Elapsed: <span className="text-blue-400 font-medium">{mins}:{secs.toString().padStart(2, '0')}</span>
           </span>
         </div>
       </div>

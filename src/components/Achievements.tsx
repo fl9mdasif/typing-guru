@@ -19,7 +19,7 @@ export const Achievements: React.FC<AchievementsProps> = ({ achievements }) => {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="relative border-slate-700 hover:bg-slate-800 hover:border-slate-600"
+          className="relative bg-transparent border-slate-700 hover:bg-slate-800 hover:border-slate-600"
         >
           <Trophy className="w-4 h-4 mr-2 text-yellow-400" />
           Achievements

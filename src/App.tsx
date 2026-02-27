@@ -10,17 +10,13 @@ import { LevelSelector } from '@/components/LevelSelector';
 import { ResultsModal } from '@/components/ResultsModal';
 import { Achievements } from '@/components/Achievements';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, Trophy, Keyboard, Timer } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Play, Pause, RotateCcw, Trophy, Keyboard } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-
-const TIME_LIMITS = [30, 60, 120];
 
 function App() {
   // Game state
   const [currentLevelId, setCurrentLevelId] = useState(1);
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'finished'>('menu');
-  const [timeLimit, setTimeLimit] = useState(60);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
@@ -158,12 +154,14 @@ function App() {
     resumeTest,
     resetTest,
     handleKeyPress,
-    timeRemaining,
+    timeElapsed,
     mistakeIndices,
     currentStreak,
+    currentExerciseIndex,
+    totalExercises,
+    exerciseJustCompleted,
   } = useTypingTest({
     level: currentLevel,
-    timeLimit,
     onComplete: handleComplete,
   });
 
@@ -214,8 +212,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <Toaster 
-        position="top-right" 
+      <Toaster
+        position="top-right"
         toastOptions={{
           style: {
             background: '#1e293b',
@@ -243,12 +241,12 @@ function App() {
 
             <div className="flex items-center gap-3">
               <Achievements achievements={achievements} />
-              
+
               <Button
                 variant="outline"
                 onClick={() => setShowLevelSelector(!showLevelSelector)}
                 className={cn(
-                  'border-slate-700 hover:bg-slate-800',
+                  'border-slate-700 hover:bg-slate-800 bg-transparent',
                   showLevelSelector && 'bg-slate-800 border-slate-600'
                 )}
               >
@@ -291,14 +289,34 @@ function App() {
                 )}>
                   {currentLevel.difficulty}
                 </span>
+
+                {/* Exercise progress — only visible during active session */}
+                {gameState !== 'menu' && (
+                  <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 font-semibold">
+                    Exercise {currentExerciseIndex + 1} / {totalExercises}
+                  </span>
+                )}
               </div>
+
+              {/* Exercise progress bar */}
+              {gameState !== 'menu' && (
+                <div className="mt-4 max-w-md mx-auto">
+                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500 ease-out rounded-full"
+                      style={{
+                        width: `${((currentExerciseIndex) / totalExercises) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Stats panel */}
             <StatsPanel
               stats={stats}
-              timeRemaining={timeRemaining}
-              totalTime={timeLimit}
+              timeElapsed={timeElapsed}
             />
 
             {/* Typing area */}
@@ -310,6 +328,7 @@ function App() {
               mistakeIndices={mistakeIndices}
               currentStreak={currentStreak}
               onKeyPress={handleKeyPress}
+              exerciseJustCompleted={exerciseJustCompleted}
             />
 
             {/* Virtual keyboard */}
@@ -322,38 +341,20 @@ function App() {
             {/* Controls */}
             <div className="flex justify-center gap-4">
               {gameState === 'menu' && (
-                <>
-                  <Select
-                    value={timeLimit.toString()}
-                    onValueChange={(value) => setTimeLimit(Number(value))}
-                  >
-                    <SelectTrigger className="w-32 border-slate-700 bg-slate-900">
-                      <Timer className="w-4 h-4 mr-2" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
-                      {TIME_LIMITS.map((time) => (
-                        <SelectItem key={time} value={time.toString()}>
-                          {time}s
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handleStart}
-                    className="bg-blue-500 hover:bg-blue-600 px-8"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start
-                  </Button>
-                </>
+                <Button
+                  onClick={handleStart}
+                  className="bg-blue-500 hover:bg-blue-600 px-8"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start
+                </Button>
               )}
 
               {gameState === 'playing' && (
                 <Button
                   variant="outline"
                   onClick={handlePause}
-                  className="border-slate-700 hover:bg-slate-800"
+                  className="border-slate-700 hover:bg-slate-800 bg-green-400"
                 >
                   <Pause className="w-4 h-4 mr-2" />
                   Pause
@@ -361,30 +362,20 @@ function App() {
               )}
 
               {gameState === 'paused' && (
-                <>
-                  <Button
-                    onClick={handleResume}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Resume
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleReset}
-                    className="border-slate-700 hover:bg-slate-800"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset
-                  </Button>
-                </>
+                <Button
+                  onClick={handleResume}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Resume
+                </Button>
               )}
 
               {(gameState === 'playing' || gameState === 'paused') && (
                 <Button
                   variant="outline"
                   onClick={handleReset}
-                  className="border-slate-700 hover:bg-slate-800"
+                  className="border-slate-700 bg-red-500 hover:bg-slate-800"
                 >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Reset

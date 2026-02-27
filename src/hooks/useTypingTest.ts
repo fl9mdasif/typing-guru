@@ -3,7 +3,6 @@ import type { TypingStats, GameState, Level } from '@/types';
 
 interface UseTypingTestProps {
   level: Level;
-  timeLimit: number;
   onComplete?: (stats: TypingStats) => void;
 }
 
@@ -18,34 +17,45 @@ interface UseTypingTestReturn {
   resumeTest: () => void;
   resetTest: () => void;
   handleKeyPress: (key: string) => void;
-  timeRemaining: number;
+  timeElapsed: number;
   mistakeIndices: Set<number>;
   currentStreak: number;
+  currentExerciseIndex: number;
+  totalExercises: number;
+  exerciseJustCompleted: boolean;
 }
 
 export const useTypingTest = ({
   level,
-  timeLimit,
   onComplete,
 }: UseTypingTestProps): UseTypingTestReturn => {
-  // Select random exercise from level
-  const [targetText, setTargetText] = useState<string>('');
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [targetText, setTargetText] = useState<string>(level.exercises[0] || '');
 
   const [userInput, setUserInput] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gameState, setGameState] = useState<GameState>('menu');
-  const [timeRemaining, setTimeRemaining] = useState(timeLimit);
+  const [timeElapsed, setTimeElapsed] = useState(0);
   const [mistakeIndices, setMistakeIndices] = useState<Set<number>>(new Set());
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [exerciseJustCompleted, setExerciseJustCompleted] = useState(false);
 
   const startTimeRef = useRef<number | null>(null);
   const pauseTimeRef = useRef<number | null>(null);
   const totalPausedTimeRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Accumulated stats across all exercises in the level session
+  const accumulatedRef = useRef({
+    totalKeystrokes: 0,
+    correctKeystrokes: 0,
+    errors: 0,
+    maxStreak: 0,
+  });
+
   const [stats, setStats] = useState<TypingStats>({
     wpm: 0,
-    accuracy: 0,
+    accuracy: 100,
     totalKeystrokes: 0,
     correctKeystrokes: 0,
     errors: 0,
@@ -54,72 +64,60 @@ export const useTypingTest = ({
     maxStreak: 0,
   });
 
-  const calculateStats = useCallback((): TypingStats => {
-    if (!startTimeRef.current) return stats;
-
+  const getElapsedSeconds = useCallback((): number => {
+    if (!startTimeRef.current) return 0;
     const now = Date.now();
-    const elapsedMinutes =
-      (now - startTimeRef.current - totalPausedTimeRef.current) / 60000;
+    return Math.floor((now - startTimeRef.current - totalPausedTimeRef.current) / 1000);
+  }, []);
 
-    // Standard WPM calculation: (characters / 5) / minutes
-    const wpm =
-      elapsedMinutes > 0
-        ? Math.round((userInput.length / 5) / elapsedMinutes)
-        : 0;
+  const buildStats = useCallback(
+    (streak: number, elapsedSec?: number): TypingStats => {
+      const acc = accumulatedRef.current;
+      const secs = elapsedSec ?? getElapsedSeconds();
+      const elapsedMinutes = secs / 60;
+      const wpm =
+        elapsedMinutes > 0
+          ? Math.round((acc.correctKeystrokes / 5) / elapsedMinutes)
+          : 0;
+      const accuracy =
+        acc.totalKeystrokes > 0
+          ? Math.round((acc.correctKeystrokes / acc.totalKeystrokes) * 100)
+          : 100;
+      return {
+        wpm,
+        accuracy,
+        totalKeystrokes: acc.totalKeystrokes,
+        correctKeystrokes: acc.correctKeystrokes,
+        errors: acc.errors,
+        timeElapsed: secs,
+        streak,
+        maxStreak: acc.maxStreak,
+      };
+    },
+    [getElapsedSeconds]
+  );
 
-    const accuracy =
-      stats.totalKeystrokes > 0
-        ? Math.round((stats.correctKeystrokes / stats.totalKeystrokes) * 100)
-        : 100;
-
-    return {
-      wpm,
-      accuracy,
-      totalKeystrokes: stats.totalKeystrokes,
-      correctKeystrokes: stats.correctKeystrokes,
-      errors: stats.errors,
-      timeElapsed: Math.floor(
-        (now - startTimeRef.current - totalPausedTimeRef.current) / 1000
-      ),
-      streak: currentStreak,
-      maxStreak: stats.maxStreak,
-    };
-  }, [userInput, stats, currentStreak]);
+  // Start the elapsed-time timer
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeElapsed(getElapsedSeconds());
+      setStats((prev) => buildStats(prev.streak));
+    }, 500);
+  }, [getElapsedSeconds, buildStats]);
 
   const startTest = useCallback(() => {
     setGameState('playing');
     startTimeRef.current = Date.now();
     totalPausedTimeRef.current = 0;
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          // Time's up
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-          }
-          setGameState('finished');
-          const finalStats = calculateStats();
-          setStats(finalStats);
-          onComplete?.(finalStats);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [calculateStats, onComplete]);
+    startTimer();
+  }, [startTimer]);
 
   const pauseTest = useCallback(() => {
     if (gameState === 'playing') {
       setGameState('paused');
       pauseTimeRef.current = Date.now();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     }
   }, [gameState]);
 
@@ -130,35 +128,24 @@ export const useTypingTest = ({
         totalPausedTimeRef.current += Date.now() - pauseTimeRef.current;
         pauseTimeRef.current = null;
       }
-
-      timerRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-            }
-            setGameState('finished');
-            const finalStats = calculateStats();
-            setStats(finalStats);
-            onComplete?.(finalStats);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startTimer();
     }
-  }, [gameState, calculateStats, onComplete]);
+  }, [gameState, startTimer]);
 
   const resetTest = useCallback(() => {
     setGameState('menu');
     setUserInput('');
     setCurrentIndex(0);
-    setTimeRemaining(timeLimit);
+    setCurrentExerciseIndex(0);
+    setTargetText(level.exercises[0] || '');
     setMistakeIndices(new Set());
     setCurrentStreak(0);
+    setTimeElapsed(0);
+    setExerciseJustCompleted(false);
+    accumulatedRef.current = { totalKeystrokes: 0, correctKeystrokes: 0, errors: 0, maxStreak: 0 };
     setStats({
       wpm: 0,
-      accuracy: 0,
+      accuracy: 100,
       totalKeystrokes: 0,
       correctKeystrokes: 0,
       errors: 0,
@@ -169,10 +156,8 @@ export const useTypingTest = ({
     startTimeRef.current = null;
     pauseTimeRef.current = null;
     totalPausedTimeRef.current = 0;
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  }, [timeLimit]);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, [level.exercises]);
 
   const handleKeyPress = useCallback(
     (key: string) => {
@@ -181,69 +166,83 @@ export const useTypingTest = ({
       const expectedChar = targetText[currentIndex];
       const isCorrect = key === expectedChar;
 
-      setStats((prev) => {
-        const newMaxStreak = isCorrect
-          ? Math.max(prev.maxStreak, currentStreak + 1)
-          : prev.maxStreak;
+      // Update accumulated stats
+      accumulatedRef.current.totalKeystrokes += 1;
+      if (isCorrect) {
+        accumulatedRef.current.correctKeystrokes += 1;
+      } else {
+        accumulatedRef.current.errors += 1;
+      }
 
-        return {
-          ...prev,
-          totalKeystrokes: prev.totalKeystrokes + 1,
-          correctKeystrokes: isCorrect
-            ? prev.correctKeystrokes + 1
-            : prev.correctKeystrokes,
-          errors: isCorrect ? prev.errors : prev.errors + 1,
-          maxStreak: newMaxStreak,
-        };
+      setCurrentStreak((prevStreak) => {
+        const newStreak = isCorrect ? prevStreak + 1 : 0;
+        accumulatedRef.current.maxStreak = Math.max(accumulatedRef.current.maxStreak, newStreak);
+        return newStreak;
       });
 
       if (isCorrect) {
+        const nextInputIndex = currentIndex + 1;
         setUserInput((prev) => prev + key);
-        setCurrentIndex((prev) => prev + 1);
-        setCurrentStreak((prev) => prev + 1);
+        setCurrentIndex(nextInputIndex);
 
-        // Check if completed
-        if (currentIndex + 1 >= targetText.length) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
+        // Check if this exercise is now complete
+        if (nextInputIndex >= targetText.length) {
+          // Brief flash of "exercise complete"
+          setExerciseJustCompleted(true);
+          setTimeout(() => setExerciseJustCompleted(false), 600);
+
+          const nextExerciseIndex = currentExerciseIndex + 1;
+
+          if (nextExerciseIndex < level.exercises.length) {
+            // Advance to next exercise after a short delay (so user sees the flash)
+            setTimeout(() => {
+              setCurrentExerciseIndex(nextExerciseIndex);
+              setTargetText(level.exercises[nextExerciseIndex]);
+              setUserInput('');
+              setCurrentIndex(0);
+              setMistakeIndices(new Set());
+            }, 600);
+          } else {
+            // All exercises done — level complete!
+            if (timerRef.current) clearInterval(timerRef.current);
+            setGameState('finished');
+            const elapsed = getElapsedSeconds();
+            setTimeElapsed(elapsed);
+            // Use currentStreak + 1 because the state update is async
+            setCurrentStreak((s) => {
+              const finalStats = buildStats(s + 1, elapsed);
+              setStats(finalStats);
+              onComplete?.(finalStats);
+              return s + 1;
+            });
           }
-          setGameState('finished');
-          const finalStats = calculateStats();
-          setStats(() => ({ ...finalStats, streak: currentStreak + 1 }));
-          onComplete?.(finalStats);
         }
       } else {
         setMistakeIndices((prev) => new Set(prev).add(currentIndex));
-        setCurrentStreak(0);
       }
     },
-    [gameState, targetText, currentIndex, calculateStats, onComplete, currentStreak]
+    [
+      gameState,
+      targetText,
+      currentIndex,
+      currentExerciseIndex,
+      level.exercises,
+      buildStats,
+      getElapsedSeconds,
+      onComplete,
+    ]
   );
 
-  // Update stats periodically during typing
+  // Reset when level changes
   useEffect(() => {
-    if (gameState === 'playing') {
-      const interval = setInterval(() => {
-        setStats(calculateStats());
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [gameState, calculateStats]);
-
-  // Update targetText when level changes and reset the test
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * level.exercises.length);
-    setTargetText(level.exercises[randomIndex]);
-    // Also reset the test when level changes
     resetTest();
-  }, [level, resetTest]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level.id]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
@@ -258,8 +257,11 @@ export const useTypingTest = ({
     resumeTest,
     resetTest,
     handleKeyPress,
-    timeRemaining,
+    timeElapsed,
     mistakeIndices,
     currentStreak,
+    currentExerciseIndex,
+    totalExercises: level.exercises.length,
+    exerciseJustCompleted,
   };
 };

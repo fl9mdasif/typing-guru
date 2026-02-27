@@ -10,6 +10,7 @@ interface TypingAreaProps {
   mistakeIndices: Set<number>;
   currentStreak: number;
   onKeyPress: (key: string) => void;
+  exerciseJustCompleted?: boolean;
 }
 
 export const TypingArea: React.FC<TypingAreaProps> = ({
@@ -19,6 +20,7 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
   mistakeIndices,
   currentStreak,
   onKeyPress,
+  exerciseJustCompleted = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +49,7 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
       }
     },
     [gameState, onKeyPress]
- );
+  );
 
   // Handle click to focus
   const handleClick = useCallback(() => {
@@ -122,9 +124,19 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
       />
 
       {/* Streak indicator */}
-      {currentStreak > 10 && gameState === 'playing' && (
+      {currentStreak > 10 && gameState === 'playing' && !exerciseJustCompleted && (
         <div className="absolute -top-4 right-4 px-3 py-1 bg-orange-500 rounded-full text-white text-sm font-bold animate-bounce">
           🔥 {currentStreak} streak!
+        </div>
+      )}
+
+      {/* Exercise complete flash */}
+      {exerciseJustCompleted && (
+        <div className="absolute inset-0 flex items-center justify-center bg-green-500/20 rounded-2xl z-10 animate-pulse">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-5xl">✓</span>
+            <span className="text-xl font-bold text-green-400 tracking-wide">Exercise Complete!</span>
+          </div>
         </div>
       )}
 
