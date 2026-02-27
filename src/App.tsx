@@ -9,11 +9,15 @@ import { StatsPanel } from '@/components/StatsPanel';
 import { LevelSelector } from '@/components/LevelSelector';
 import { ResultsModal } from '@/components/ResultsModal';
 import { Achievements } from '@/components/Achievements';
+import { SpeedTest } from '@/components/SpeedTest';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, Trophy, Keyboard } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trophy, Keyboard, Gauge } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 
 function App() {
+  // App view: 'game' | 'speedtest'
+  const [activeView, setActiveView] = useState<'game' | 'speedtest'>('game');
+
   // Game state
   const [currentLevelId, setCurrentLevelId] = useState(1);
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'finished'>('menu');
@@ -244,10 +248,28 @@ function App() {
 
               <Button
                 variant="outline"
-                onClick={() => setShowLevelSelector(!showLevelSelector)}
+                onClick={() => {
+                  setActiveView('speedtest');
+                  setShowLevelSelector(false);
+                }}
                 className={cn(
                   'border-slate-700 hover:bg-slate-800 bg-transparent',
-                  showLevelSelector && 'bg-slate-800 border-slate-600'
+                  activeView === 'speedtest' && 'bg-slate-800 border-blue-500 text-blue-400'
+                )}
+              >
+                <Gauge className="w-4 h-4 mr-2 text-blue-400" />
+                Speed Test
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setActiveView('game');
+                  setShowLevelSelector(!showLevelSelector);
+                }}
+                className={cn(
+                  'border-slate-700 hover:bg-slate-800 bg-transparent',
+                  showLevelSelector && activeView === 'game' && 'bg-slate-800 border-slate-600'
                 )}
               >
                 <Trophy className="w-4 h-4 mr-2 text-yellow-400" />
@@ -260,7 +282,9 @@ function App() {
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {showLevelSelector ? (
+        {activeView === 'speedtest' ? (
+          <SpeedTest />
+        ) : showLevelSelector ? (
           <LevelSelector
             levels={levels}
             progress={progress}
