@@ -13,6 +13,7 @@ import { SpeedTest } from '@/components/SpeedTest';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, Trophy, Keyboard, Gauge } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
+// import Footer from './components/Footer';
 
 function App() {
   // App view: 'game' | 'speedtest'
@@ -426,6 +427,8 @@ function App() {
         onNextLevel={handleNextLevel}
         hasNextLevel={currentLevelId < levels.length}
       />
+
+
     </div>
   );
 }

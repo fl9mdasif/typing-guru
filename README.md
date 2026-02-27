@@ -9,6 +9,8 @@ A modern, progressive touch-typing trainer built with **React + TypeScript + Vit
 
 ---
 
+
+
 ## ✨ Features
 
 ### 🎮 Typing Game (Progressive Lessons)
